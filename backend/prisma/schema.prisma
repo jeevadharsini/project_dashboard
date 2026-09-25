@@ -1,0 +1,148 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  PM
+  DEVELOPER
+}
+
+enum TaskStatus {
+  TODO
+  IN_PROGRESS
+  IN_REVIEW
+  DONE
+  OVERDUE
+}
+
+enum TaskPriority {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      Role
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  projectsCreated  Project[]      @relation("ProjectCreator")
+  tasksAssigned    Task[]         @relation("TaskAssignee")
+  activityLogs     ActivityLog[]  @relation("ActivityActor")
+  notifications    Notification[] @relation("NotificationRecipient")
+  refreshTokens    RefreshToken[]
+
+  @@index([role])
+}
+
+model Client {
+  id        String    @id @default(uuid())
+  name      String
+  email     String?
+  createdAt DateTime  @default(now())
+  projects  Project[]
+}
+
+model Project {
+  id          String   @id @default(uuid())
+  name        String
+  description String?
+  clientId    String?
+  creatorId   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  client       Client?       @relation(fields: [clientId], references: [id])
+  creator      User          @relation("ProjectCreator", fields: [creatorId], references: [id])
+  tasks        Task[]
+  activityLogs ActivityLog[]
+
+  @@index([creatorId])
+}
+
+model Task {
+  id           String       @id @default(uuid())
+  title        String
+  description  String?
+  projectId    String
+  assigneeId   String?
+  status       TaskStatus   @default(TODO)
+  priority     TaskPriority @default(MEDIUM)
+  dueDate      DateTime?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  project      Project       @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  assignee     User?         @relation("TaskAssignee", fields: [assigneeId], references: [id])
+  activityLogs ActivityLog[]
+
+  @@index([projectId])
+  @@index([assigneeId])
+  @@index([status])
+  @@index([priority])
+  @@index([dueDate])
+}
+
+// Immutable history of status transitions. Never derive history from Task's
+// current state - always read this table for "what happened when".
+model ActivityLog {
+  id             String     @id @default(uuid())
+  taskId         String
+  projectId      String
+  actorId        String
+  previousStatus TaskStatus?
+  newStatus      TaskStatus
+  createdAt      DateTime   @default(now())
+
+  task    Task    @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  project Project @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  actor   User    @relation("ActivityActor", fields: [actorId], references: [id])
+
+  @@index([projectId])
+  @@index([taskId])
+  @@index([createdAt])
+}
+
+enum NotificationType {
+  TASK_ASSIGNED
+  TASK_IN_REVIEW
+}
+
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  type      NotificationType
+  message   String
+  taskId    String?
+  projectId String?
+  isRead    Boolean          @default(false)
+  createdAt DateTime         @default(now())
+
+  user User @relation("NotificationRecipient", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  userId    String
+  tokenHash String   @unique
+  expiresAt DateTime
+  revoked   Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
