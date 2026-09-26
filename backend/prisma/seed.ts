@@ -13,18 +13,18 @@ async function main() {
   const password = await hashed("Password123!");
 
   const admin = await prisma.user.create({
-    data: { email: "admin@example.com", name: "Alice Admin", password, role: Role.ADMIN },
+    data: { email: "admin@example.com", name: "Jeeva Admin", password, role: Role.ADMIN },
   });
 
   const pm1 = await prisma.user.create({
-    data: { email: "pm1@example.com", name: "Pat PM", password, role: Role.PM },
+    data: { email: "pm1@example.com", name: "Anu PM", password, role: Role.PM },
   });
   const pm2 = await prisma.user.create({
     data: { email: "pm2@example.com", name: "Priya PM", password, role: Role.PM },
   });
 
   const devs = await Promise.all(
-    ["Dana Dev", "Deepak Dev", "Diego Dev", "Dara Dev"].map((name, i) =>
+    ["Dhana Dev", "Deepak Dev", "Abi Dev", "Barsha Dev"].map((name, i) =>
       prisma.user.create({
         data: { email: `dev${i + 1}@example.com`, name, password, role: Role.DEVELOPER },
       })
