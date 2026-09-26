@@ -32,7 +32,7 @@ export async function changeTaskStatus(taskId: string, newStatus: TaskStatus, ac
   });
 
   if (newStatus === TaskStatus.IN_REVIEW) {
-    const { notifyPmTaskInReview } = await import("./notification.service");
+    const { notifyPmTaskInReview } = await import("./notification.service.js");
     await notifyPmTaskInReview(updatedTask.id);
   }
 

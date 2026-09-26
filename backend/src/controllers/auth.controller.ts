@@ -46,7 +46,7 @@ export async function refresh(req: Request, res: Response, next: NextFunction) {
 
 export async function me(req: Request, res: Response, next: NextFunction) {
   try {
-    const { prisma } = await import("../lib/prisma");
+    const { prisma } = await import("../lib/prisma.js");
     const user = await prisma.user.findUniqueOrThrow({
       where: { id: req.user!.id },
       select: { id: true, name: true, email: true, role: true },
